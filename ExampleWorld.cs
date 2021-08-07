@@ -22,6 +22,7 @@ namespace Exampleu {
         public int randFillPercent=50;
         public int tile = ModContent.TileType<CrystalSand>();
         public int wall = 172;
+        public int tree = 20; // меняй на свое дерево
         public int threshold=4;
         public int treasureHouses = 0;
         static readonly byte[,] TreasureHouseTiles =
@@ -62,20 +63,17 @@ namespace Exampleu {
         };
         public override void ModifyWorldGenTasks(List<GenPass> tasks, ref float totalWeight) {
             int DesertificationIndex = tasks.FindIndex(genpass => genpass.Name.Equals("Planting Trees"));
-            // int DesertificationIndex = tasks.FindIndex(genpass => genpass.Name.Equals("Full Desert"));
             if (DesertificationIndex != -1) {
                 tasks.Insert(DesertificationIndex + 1, new PassLegacy("YES", ExampleGen));            
             }
         }
         private void ExampleGen(GenerationProgress progress) {
             // Biome Shape
-            progress.Message = "SUUUUUUUUCK";
+            progress.Message = "Creating Crystal Biome";
             width = (int)(Main.rand.Next(150,250)*0.8f);
             height = width;
-            // var XPos = WorldGen.genRand.Next((int)Main.maxTilesX/4,Main.maxTilesX*3/4);
             var YPos = WorldGen.genRand.Next((int)WorldGen.rockLayer+250, Main.maxTilesY-350);
             var XPos = (int)Main.maxTilesX/2 + Main.rand.Next(-100,100);
-            // var YPos = 150;
             int startX = XPos-width/2;
             int startY = YPos-height/2;
             WorldGen.TileRunner(
@@ -92,23 +90,18 @@ namespace Exampleu {
             );
             GenerateCave();
             PlaceGrid(startX,startY);
-            // Chests
-            // SpawnTreasure(XPos,YPos);
-            // Trees
             for (int j = 0; j < width; j++) {
                 for (int k = 0; k < height; k++) {
                     if (cavePoints[j,k] == 0) {
                         int height = GetHeight(j,k);
                         
                         if (height>=25 && Main.tile[startX+j,startY+k+1].type == tile && Main.rand.Next(15)==0) {  
-                                Main.tile[startX+j,startY+k+1].type = 2; 
-                                Main.tile[startX+j+1,startY+k+1].type = 2; 
-                                Main.tile[startX+j-1,startY+k+1].type = 2; 
-                                Main.tile[startX+j,startY+k+1].type = 2; 
-                                // Main.tile[startX+j+2,startY+k+1].type = 2; 
-                                // Main.tile[startX+j-2,startY+k+1].type = 2; 
+                                Main.tile[startX+j,startY+k+1].type = tile; 
+                                Main.tile[startX+j+1,startY+k+1].type = tile; 
+                                Main.tile[startX+j-1,startY+k+1].type = tile; 
+                                Main.tile[startX+j,startY+k+1].type = tile;
                                 PreparePlant(startX+j,startY+k,height);
-                                WorldGen.PlaceObject(startX+j,startY+k,20);
+                                WorldGen.PlaceObject(startX+j,startY+k,tree);
                                 WorldGen.KillWall(startX+j,startY+k);
                                 WorldGen.GrowTree(startX+j,startY+k);
                         }
@@ -119,7 +112,7 @@ namespace Exampleu {
         private void GenerateCave()
         {
             cavePoints = new int[width, height];
-            int seed = Main.rand.Next(0, 1000000);
+            int seed = WorldGen.rand.Next(0, 1000000);
             System.Random randChoice = new System.Random(seed.GetHashCode());
 
             for (int x = 0; x < width; x++)
@@ -200,11 +193,17 @@ namespace Exampleu {
                     }
                     if (cavePoints[x,y] == 1) {
                     }
-                    if (treasureHouses < 1 && Main.tile[(int)(startX+x), (int)(startY+y)].type == tile && Main.rand.Next(3000)==0) {
-                        SpawnTreasure((int)(startX+x), (int)(startY+y));
-                        treasureHouses++;
-                    }
                 }
+            }
+
+            // Treasure
+            treasureHouses = (int)(WorlGen.rand.Next(0,100)+60)/60
+            for (int house = 0; house < treasureHouses; house++) {
+                var houseX = WorldGen.rand.Next(0, width) + startX;
+                var houseY = WorldGen.rand.Next(0, height) + startY;
+
+                SpawnTreasure(houseX, houseY);
+            }
             }
         }  
         private int GetHeight(int pointX, int pointY) {
@@ -225,16 +224,6 @@ namespace Exampleu {
         private void PreparePlant(int pointX, int pointY, int height) {
             int x = pointX;
             int y = pointY;
-
-            // WorldGen.KillTile(x+1,y+1);
-            // WorldGen.PlaceTile(x+1,y+1,plantTile);
-
-            // WorldGen.KillTile(x,y+1);
-            // WorldGen.PlaceTile(x,y+1,plantTile);
-
-            // WorldGen.KillTile(x-1,y+1);
-            // WorldGen.PlaceTile(x-1,y+1,plantTile);
-
             for (int i = 0; i < height; i++) {
                 WorldGen.KillTile(x+1,y-i);
 
